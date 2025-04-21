@@ -71,6 +71,7 @@ class SequenceInferencer {
 
         std::vector<int> predictions_;
         std::vector<float> scores_;
+        std::vector<int> decoded_indices_;
 
         void Init(std::string model_path){
             static Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "default");  //holds the logging state 

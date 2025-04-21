@@ -69,11 +69,11 @@ void SequenceInferencer::PreProcess(){
     cv::cvtColor(image_, image_, cv::COLOR_RGB2GRAY);  
     
     // RescaleToHeight
-    w_img = image_.cols;
-    h_img = image_.rows;
+    int w_img = image_.cols;
+    int h_img = image_.rows;
     
-    h_resized = 32;
-    w_resized = ceil(h_resized / h_img * w_img);
+    int h_resized = 32;
+    int w_resized = ceil(h_resized / h_img * w_img);
     if(w_resized % 16 != 0){
         w_resized = ceil(w_resized / 16) * 16;
     }
@@ -170,7 +170,7 @@ void SequenceInferencer::PostProcess(){
 	// }
 	// predictions_.push_back(prediction);
 	// scores_.push_back(max_prob);
-    for(int i=0; i< (w_input_[0] + 4)/4; i++){
+    for(int i=0; i< (input_w_[0] + 4)/4; i++){
         for(int j=0; j<37; j++){
             std::cout<<pdata[i*37 + j] <<" ";
         }

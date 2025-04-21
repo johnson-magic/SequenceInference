@@ -110,7 +110,7 @@ int main(int argc, char** argv){
 				#endif
             
             for(int i=0; i< iter; i++){
-            	std::pair<std::vector<int>, std::vector<float>> res = Sequence.GetRes();
+            	std::pair<std::vector<int>, std::vector<float>> res = sequence.GetRes();
                 std::vector<int> classes = res.first;
                 std::vector<float> scores = res.second;
                 for(int j=0; j<classes.size(); j++){
@@ -136,7 +136,7 @@ int main(int argc, char** argv){
         }
     }
 
-	Sequence.Release();  // session_options.release(); is it ok?
+	sequence.Release();  // session_options.release(); is it ok?
 
 	std::cout << "exit after 1 minutes" << std::endl;
 	std::this_thread::sleep_for(std::chrono::minutes(1));
