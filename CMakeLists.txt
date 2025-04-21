@@ -27,6 +27,11 @@ set(SOURCES
     src/sequence_inferencer.cpp
     src/utils.cpp
 )
+set(SOURCES_LIBRARY
+    src/sequence_inferencer.cpp
+    src/utils.cpp
+)
+add_library(${PROJECT_NAME}_lib ${SOURCES_LIBRARY})
 add_executable(${PROJECT_NAME} ${SOURCES}) # main.cpp 为你的源文件名称
 include_directories("./include")
 
@@ -40,3 +45,6 @@ include_directories("C:/Users/24601/Desktop/fabu/software/onnxruntime-win-x64-1.
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED YES)
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES)  # 这个是必须的，否则会报错
