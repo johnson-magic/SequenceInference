@@ -1,4 +1,6 @@
 build/
+Release/
+.vscode/
 *.onnx
 *.pt
 *.pth
