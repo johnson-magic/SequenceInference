@@ -55,11 +55,12 @@ void SequenceInferencer::GetOutputInfo(){
     } 
 }
 
-void SequenceInferencer::PreProcess(){
+void SequenceInferencer::PreProcess(std::string& image_path){
     //1. read
     //2. BGR2GRAY
     //3. RescaleToHeight
     //4. normalize
+    image_path_ = return_image_path(image_path);
 	image_ = cv::imread(image_path_);
 	if (image_.empty()) {
 		std::cerr << "Failed to read the image!" << std::endl;

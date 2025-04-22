@@ -20,10 +20,10 @@
 
 class SequenceInferencer {
     public:
-        SequenceInferencer(std::string& model_path, std::string& image_path){    
+        SequenceInferencer(std::string& model_path){    
             labels_ = {"0", "90", "180", "270"};
             
-            image_path_ = return_image_path(image_path);
+            // image_path_ = return_image_path(image_path);
             model_path_ = model_path;
             Init(model_path_);
         };
@@ -32,7 +32,7 @@ class SequenceInferencer {
         void GetOutputInfo();
 
 
-        void PreProcess();
+        void PreProcess(std::string& image_path);
         void Inference();
         void PostProcess();
         std::pair<std::vector<int>, std::vector<float>> SequenceInferencer::GetRes();
