@@ -42,7 +42,7 @@ int main(int argc, char** argv){
 	std::string result_path = argv[3];
     
 	/*step1: 构造inference对象*/
-	SequenceInferencer sequence(model_path, image_path);  // 理论上，image_path放到构造函数中，总是怪怪的
+	SequenceInferencer sequence(model_path);  // 理论上，image_path放到构造函数中，总是怪怪的
     
     sequence.GetInputInfo();
 	sequence.GetOutputInfo();
@@ -80,7 +80,7 @@ int main(int argc, char** argv){
 				#endif
 			
 			for(int i=0; i< iter; i++){
-				sequence.PreProcess();
+				sequence.PreProcess(image_path);
 			}
 		
 				#ifdef SPEED_TEST
