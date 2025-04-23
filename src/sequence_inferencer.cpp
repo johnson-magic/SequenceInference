@@ -113,6 +113,64 @@ void SequenceInferencer::PreProcess(std::string& image_path){
     input_w_[0] = w_resized;
 }
 
+
+void SequenceInferencer::PreProcess(cv::Mat& image){
+    //1. read
+    //2. BGR2GRAY
+    //3. RescaleToHeight
+    //4. normalize
+	image_ = image;
+	if (image_.empty()) {
+		std::cerr << "Failed to read the image!" << std::endl;
+		return;
+	}
+    std::cout << "Type: " << image_.type() << std::endl;
+
+	// ge_ = pad_and_resize(image_);
+    cv::cvtColor(image_, image_, cv::COLOR_RGB2GRAY);  
+    
+    // RescaleToHeight
+    int w_img = image_.cols;
+    int h_img = image_.rows;
+    
+    int h_resized = 32;
+    std::cout<<"000000000000000000000000000000000000000000000000"<<" "<<h_img<<" "<<w_img<<std::endl;
+    int w_resized = ceil(h_resized * 1.0 / h_img * w_img);
+    if(w_resized % 16 != 0){
+        w_resized = ceil(w_resized / 16) * 16;
+    }
+    std::cout<<"11111111111111111111111111111111111111111111111111"<<" "<<w_resized<<" "<<h_resized<<std::endl;
+    cv::resize(image_, image_, cv::Size(w_resized, h_resized), 0, 0, cv::INTER_LINEAR); 
+    std::cout << "Type: " << image_.type() << std::endl;
+    for (int r = 0; r < image_.rows; r++) {
+        for (int c = 0; c < image_.cols; c++) {
+            // 获取像素的 BGR 值
+            // cv::Vec3b pixel = image_.at<cv::Vec3b>(r, c);
+            
+            // // 打印 B, G, R 通道的值（0-255）
+            // std::cout << "Pixel(" << r << ", " << c << "): "
+            //           << "B=" << (int)pixel[0] << ", "
+            //           << "G=" << (int)pixel[1] << ", "
+            //           << "R=" << (int)pixel[2] << std::endl;
+            std::cout<<(int)image_.at<uchar>(r, c)<<" ";
+        }
+        std::cout<<std::endl;
+    }
+    std::cout<<std::endl<<std::endl;
+    image_.convertTo(image_, CV_32F);  // 在进行归一化之前，这个操作是必须的
+    image_ = (image_ - 127.0) / 127.0;
+    // for(int i=0; i<32; i++){
+    //     for(int j=0; j<w_resized; j++){
+    //         std::cout<<(float)image_.at<float>(i, j)<<" ";
+    //     }
+    //     std::cout<<std::endl;
+    // }
+    // std::cout<<std::endl;
+    
+    input_h_[0] = h_resized;
+    input_w_[0] = w_resized;
+}
+
 void SequenceInferencer::SaveOrtValueAsImage(Ort::Value& value, const std::string& filename) {
     // 确保值是张量
     if (!value.IsTensor()) {
