@@ -1,1 +1,1 @@
-# ClassifierInference
+# SequenceInference
