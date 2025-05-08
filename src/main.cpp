@@ -31,18 +31,20 @@ int main(int argc, char** argv){
 		int left = decrypt(timelimit.left, 20250124);
 	#endif
 
-	if(argc != 4){  // 分类任务，没有什么可可视化的，因此参数为4，而非5
-		std::cout<<"[ERROR] sequence_inference model_path img_path result_path"<<std::endl;
-		std::cout<<"e.g., ./sequence_inference.exe crnn.onnx ./data/2022-12-08 14-54-28_000001_790_447_851_422_866_458_804_483.bmp res.txt"<<std::endl;
+	if(argc != 5){  // 分类任务，没有什么可可视化的，因此参数为4，而非5
+		std::cout<<argc<<std::endl;
+		std::cout<<"[ERROR] sequence_inference model_path charset_path img_path result_path"<<std::endl;
+		std::cout<<"e.g., ./sequence_inference.exe crnn.onnx charset.txt ./data/2022-12-08 14-54-28_000001_790_447_851_422_866_458_804_483.bmp res.txt"<<std::endl;
 		return 0;
 	}
 
 	std::string model_path = argv[1];
-	std::string image_path = argv[2];
-	std::string result_path = argv[3];
+	std::string charset_path = argv[2];
+	std::string image_path = argv[3];
+	std::string result_path = argv[4];
     
 	/*step1: 构造inference对象*/
-	SequenceInferencer sequence(model_path);  // 理论上，image_path放到构造函数中，总是怪怪的
+	SequenceInferencer sequence(model_path, charset_path);  // 理论上，image_path放到构造函数中，总是怪怪的
     
     sequence.GetInputInfo();
 	sequence.GetOutputInfo();
@@ -110,11 +112,11 @@ int main(int argc, char** argv){
 				#endif
             
             for(int i=0; i< iter; i++){
-            	std::pair<std::vector<int>, std::vector<float>> res = sequence.GetRes();
-                std::vector<int> classes = res.first;
-                std::vector<float> scores = res.second;
-                for(int j=0; j<classes.size(); j++){
-                    std::cout<<"class: "<<classes[j]<<"scores: "<<scores[j]<<std::endl;
+            	std::pair<std::vector<int>, std::vector<char>> res = sequence.GetRes();
+                std::vector<int> charset_ids = res.first;
+                std::vector<char> charset_chars = res.second;
+                for(int j=0; j<charset_ids.size(); j++){
+                    std::cout<<"charset id: "<<charset_ids[j]<<"; charset char: "<<charset_chars[j]<<std::endl;
                 }
 			}
 
