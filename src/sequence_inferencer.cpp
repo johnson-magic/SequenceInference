@@ -257,13 +257,13 @@ void SequenceInferencer::PostProcess(){
 	// predictions_.push_back(prediction);
 	// scores_.push_back(max_prob);
     for(int i=0; i< (input_w_[0] + 4)/4; i++){
-        for(int j=0; j<37; j++){
-            std::cout<<pdata[i*37 + j] <<" ";
+        for(int j=0; j<35; j++){
+            std::cout<<pdata[i*35 + j] <<" ";
         }
         std::cout<<std::endl;
     }
     int L = (input_w_[0] + 4)/4;
-    int C = 37;
+    int C = 35;
 
     std::vector<int> predictions;
     for (int i = 0; i < L; ++i) {
@@ -283,7 +283,7 @@ void SequenceInferencer::PostProcess(){
     //std::vector<int> decoded_indices;
     int prev_idx = -1;
     for (int idx : predictions) {
-        if (idx == 36) { // 36表示空白符
+        if (idx == 34) { // 36表示空白符
             prev_idx =-1; // 重置 prev_idx, 确认
             continue; // 跳过空白符
         }
