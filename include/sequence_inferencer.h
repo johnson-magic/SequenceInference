@@ -35,7 +35,7 @@ class SequenceInferencer {
         void PreProcess(cv::Mat& image);
         void Inference();
         void PostProcess();
-        std::pair<std::vector<int>, std::vector<float>> SequenceInferencer::GetRes();
+        std::pair<std::vector<int>, std::vector<char>> SequenceInferencer::GetRes();
 
         void Release();
         
@@ -75,6 +75,7 @@ class SequenceInferencer {
         std::vector<int> predictions_;
         std::vector<float> scores_;
         std::vector<int> decoded_indices_;
+        std::vector<char> decoded_chars_;
 
         void Init(std::string &model_path, std::string &charset_path){
             static Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "default");  //holds the logging state 

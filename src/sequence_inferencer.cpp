@@ -66,9 +66,6 @@ void SequenceInferencer::PreProcess(std::string& image_path){
 		std::cerr << "Failed to read the image!" << std::endl;
 		return;
 	}
-    std::cout << "Type: " << image_.type() << std::endl;
-
-	// ge_ = pad_and_resize(image_);
     cv::cvtColor(image_, image_, cv::COLOR_RGB2GRAY);  
     
     // RescaleToHeight
@@ -76,39 +73,13 @@ void SequenceInferencer::PreProcess(std::string& image_path){
     int h_img = image_.rows;
     
     int h_resized = 32;
-    std::cout<<"000000000000000000000000000000000000000000000000"<<" "<<h_img<<" "<<w_img<<std::endl;
     int w_resized = ceil(h_resized * 1.0 / h_img * w_img);
     if(w_resized % 16 != 0){
         w_resized = ceil(w_resized / 16) * 16;
     }
-    std::cout<<"11111111111111111111111111111111111111111111111111"<<" "<<w_resized<<" "<<h_resized<<std::endl;
     cv::resize(image_, image_, cv::Size(w_resized, h_resized), 0, 0, cv::INTER_LINEAR); 
-    std::cout << "Type: " << image_.type() << std::endl;
-    for (int r = 0; r < image_.rows; r++) {
-        for (int c = 0; c < image_.cols; c++) {
-            // 获取像素的 BGR 值
-            // cv::Vec3b pixel = image_.at<cv::Vec3b>(r, c);
-            
-            // // 打印 B, G, R 通道的值（0-255）
-            // std::cout << "Pixel(" << r << ", " << c << "): "
-            //           << "B=" << (int)pixel[0] << ", "
-            //           << "G=" << (int)pixel[1] << ", "
-            //           << "R=" << (int)pixel[2] << std::endl;
-            std::cout<<(int)image_.at<uchar>(r, c)<<" ";
-        }
-        std::cout<<std::endl;
-    }
-    std::cout<<std::endl<<std::endl;
     image_.convertTo(image_, CV_32F);  // 在进行归一化之前，这个操作是必须的
     image_ = (image_ - 127.0) / 127.0;
-    // for(int i=0; i<32; i++){
-    //     for(int j=0; j<w_resized; j++){
-    //         std::cout<<(float)image_.at<float>(i, j)<<" ";
-    //     }
-    //     std::cout<<std::endl;
-    // }
-    // std::cout<<std::endl;
-    
     input_h_[0] = h_resized;
     input_w_[0] = w_resized;
 }
@@ -124,9 +95,7 @@ void SequenceInferencer::PreProcess(cv::Mat& image){
 		std::cerr << "Failed to read the image!" << std::endl;
 		return;
 	}
-    std::cout << "Type: " << image_.type() << std::endl;
 
-	// ge_ = pad_and_resize(image_);
     cv::cvtColor(image_, image_, cv::COLOR_RGB2GRAY);  
     
     // RescaleToHeight
@@ -134,38 +103,13 @@ void SequenceInferencer::PreProcess(cv::Mat& image){
     int h_img = image_.rows;
     
     int h_resized = 32;
-    std::cout<<"000000000000000000000000000000000000000000000000"<<" "<<h_img<<" "<<w_img<<std::endl;
     int w_resized = ceil(h_resized * 1.0 / h_img * w_img);
     if(w_resized % 16 != 0){
         w_resized = ceil(w_resized / 16) * 16;
     }
-    std::cout<<"11111111111111111111111111111111111111111111111111"<<" "<<w_resized<<" "<<h_resized<<std::endl;
     cv::resize(image_, image_, cv::Size(w_resized, h_resized), 0, 0, cv::INTER_LINEAR); 
-    std::cout << "Type: " << image_.type() << std::endl;
-    for (int r = 0; r < image_.rows; r++) {
-        for (int c = 0; c < image_.cols; c++) {
-            // 获取像素的 BGR 值
-            // cv::Vec3b pixel = image_.at<cv::Vec3b>(r, c);
-            
-            // // 打印 B, G, R 通道的值（0-255）
-            // std::cout << "Pixel(" << r << ", " << c << "): "
-            //           << "B=" << (int)pixel[0] << ", "
-            //           << "G=" << (int)pixel[1] << ", "
-            //           << "R=" << (int)pixel[2] << std::endl;
-            std::cout<<(int)image_.at<uchar>(r, c)<<" ";
-        }
-        std::cout<<std::endl;
-    }
-    std::cout<<std::endl<<std::endl;
     image_.convertTo(image_, CV_32F);  // 在进行归一化之前，这个操作是必须的
     image_ = (image_ - 127.0) / 127.0;
-    // for(int i=0; i<32; i++){
-    //     for(int j=0; j<w_resized; j++){
-    //         std::cout<<(float)image_.at<float>(i, j)<<" ";
-    //     }
-    //     std::cout<<std::endl;
-    // }
-    // std::cout<<std::endl;
     
     input_h_[0] = h_resized;
     input_w_[0] = w_resized;
@@ -206,9 +150,6 @@ void SequenceInferencer::SaveOrtValueAsImage(Ort::Value& value, const std::strin
     if (!cv::imwrite(filename, imageToSave)) {
         std::cerr << "Failed to save image to " << filename << std::endl;
 	}
-    // } else {
-    //     std::cout << "Image saved to " << filename << std::endl;
-    // }
 }
 
 void SequenceInferencer::Inference(){
@@ -245,12 +186,6 @@ void SequenceInferencer::Inference(){
 void SequenceInferencer::PostProcess(){
 	// output data
 	float* pdata = ort_outputs_[0].GetTensorMutableData<float>();  // pdata的尺寸还需要从长计议 1, (w_input_[0] + 4)/4, 37;
-    for(int i=0; i< (input_w_[0] + 4)/4; i++){
-        for(int j=0; j<charset_len_; j++){
-            std::cout<<pdata[i*charset_len_with_blank_ + j] <<" ";
-        }
-        std::cout<<std::endl;
-    }
     int L = (input_w_[0] + 4)/4;
     int C = charset_len_with_blank_;
 
@@ -269,7 +204,6 @@ void SequenceInferencer::PostProcess(){
     }
 
     // 步骤2：合并重复字符并跳过空白符
-    //std::vector<int> decoded_indices;
     int prev_idx = -1;
     for (int idx : predictions) {
         if (idx == charset_len_) { // 36表示空白符
@@ -278,13 +212,10 @@ void SequenceInferencer::PostProcess(){
         }
         if (idx != prev_idx) { // 仅当字符变化时保留
             decoded_indices_.push_back(idx);
+            decoded_chars_.push_back(charset_[idx]);
             prev_idx = idx;
         }
     }
-    for(int i=0; i<decoded_indices_.size(); i++){
-        std::cout<<decoded_indices_[i]<<" ";
-    }
-    std::cout<<std::endl;
             
 	#ifdef CONFORMANCE_TEST
 		SaveRotatedObjsToTextFile(remain_rotated_objects_, "remain_rotated_objects.txt");
@@ -329,8 +260,8 @@ cv::Mat SequenceInferencer::pad_and_resize(const cv::Mat img){
     return img_bordered;
 }
 
-std::pair<std::vector<int>, std::vector<float>> SequenceInferencer::GetRes(){
-    return std::make_pair(predictions_, scores_);
+std::pair<std::vector<int>, std::vector<char>> SequenceInferencer::GetRes(){
+    return std::make_pair(decoded_indices_, decoded_chars_);
 }
 
 void SequenceInferencer::Release(){
