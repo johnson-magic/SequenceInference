@@ -244,26 +244,15 @@ void SequenceInferencer::Inference(){
 
 void SequenceInferencer::PostProcess(){
 	// output data
-	float* pdata = ort_outputs_[0].GetTensorMutableData<float>();  // pdata的尺寸还需要从长计议 1, (w_input_[0] + 4)/4, 37
-	// int prediction = 0;
-	// float max_prob = *(pdata + prediction);
-	// int begin_id = 1;
-	// for(int i = begin_id; i<output_class_num_[0]; i++){
-	// if(*(pdata + i) > max_prob){
-	// max_prob = *(pdata + i);
-	// prediction = i;
-	// }
-	// }
-	// predictions_.push_back(prediction);
-	// scores_.push_back(max_prob);
+	float* pdata = ort_outputs_[0].GetTensorMutableData<float>();  // pdata的尺寸还需要从长计议 1, (w_input_[0] + 4)/4, 37;
     for(int i=0; i< (input_w_[0] + 4)/4; i++){
-        for(int j=0; j<35; j++){
-            std::cout<<pdata[i*35 + j] <<" ";
+        for(int j=0; j<charset_len_; j++){
+            std::cout<<pdata[i*charset_len_with_blank_ + j] <<" ";
         }
         std::cout<<std::endl;
     }
     int L = (input_w_[0] + 4)/4;
-    int C = 35;
+    int C = charset_len_with_blank_;
 
     std::vector<int> predictions;
     for (int i = 0; i < L; ++i) {
@@ -283,7 +272,7 @@ void SequenceInferencer::PostProcess(){
     //std::vector<int> decoded_indices;
     int prev_idx = -1;
     for (int idx : predictions) {
-        if (idx == 34) { // 36表示空白符
+        if (idx == charset_len_) { // 36表示空白符
             prev_idx =-1; // 重置 prev_idx, 确认
             continue; // 跳过空白符
         }
