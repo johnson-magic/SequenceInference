@@ -190,6 +190,8 @@ void SequenceInferencer::PostProcess(){
     int C = charset_len_with_blank_;
 
     std::vector<int> predictions;
+    decoded_indices_.clear();
+    decoded_chars_.clear();
     for (int i = 0; i < L; ++i) {
         float* timestep_probs = pdata + i*C; // 第 i 个时间步的概率
         int max_idx = 0;
