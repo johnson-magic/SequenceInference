@@ -4,6 +4,7 @@ Release/
 *.onnx
 *.pt
 *.pth
+.ipynb_checkpoints
 
 # Prerequisites
 *.d
