@@ -2,14 +2,29 @@
 #include <cmath>
 #include "sequence_inferencer.h"
 
-void SequenceInferencer::GetInputInfo(){
-    // get the input information
-	// 1. numInputNodes_
-	// 2. input_node_names_
-	// 3. input_w_ and input_h_
-
-	numInputNodes_ = GetSessionInputCount();
+void SequenceInferencer::Init(std::string &model_path, std::string &charset_path)
+{
+    static Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "default");  //holds the logging state 
     
+    Ort::SessionOptions option;
+    option.SetIntraOpNumThreads(1);
+    option.SetGraphOptimizationLevel(ORT_ENABLE_ALL);
+    session_ = new Ort::Session(env, ConvertToWString(model_path).c_str(), option);
+
+    std::ifstream file(charset_path);
+    if (file.is_open()) {
+        std::string line;
+        while (std::getline(file, line)) {
+            charset_.push_back(line[0]);  // string ->[0]-> char
+        }
+        file.close();
+    }
+    charset_len_ = charset_.size();
+    charset_len_with_blank_ = charset_len_ + 1;
+}
+
+void SequenceInferencer::GetInputInfo(){
+	numInputNodes_ = GetSessionInputCount();
     for (int input_id = 0; input_id < numInputNodes_; input_id++) {
         Ort::AllocatorWithDefaultOptions allocator;  // 如何理解allocator的工作机制？ 它能够被复用吗？
         auto input_name = session_->GetInputNameAllocated(input_id, allocator);  // 通常，numInputNodes_只为1
@@ -19,8 +34,8 @@ void SequenceInferencer::GetInputInfo(){
 	
         auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
         auto input_dims = input_tensor_info.GetShape();
-        input_h_.push_back(input_dims[2]);
-        input_w_.push_back(input_dims[3]);    
+        net_h_.push_back(input_dims[2]);
+        net_w_.push_back(input_dims[3]);    
 	}
 }
 
@@ -36,11 +51,11 @@ void SequenceInferencer::GetOutputInfo(){
     // get the output information
 	// 1. numOutputNodes_
 	// 2. Output_node_names_
-	// 3. Output_w_ and input_h_
+	// 3. Output_w_ and net_h_
 
 	numOutputNodes_ = GetSessionOutputCount();
     
-    for(int output_id = 0; output_id < numInputNodes_; output_id++){
+    for(int output_id = 0; output_id < numOutputNodes_; output_id++){
         Ort::AllocatorWithDefaultOptions allocator;
         auto out_name = session_->GetOutputNameAllocated(output_id, allocator);
         output_node_names_.push_back(out_name.get());
@@ -51,21 +66,28 @@ void SequenceInferencer::GetOutputInfo(){
         
         // output_h_.push_back(output_dims[1]);  // 注意：对于检测模型，模型的输出一般为(B, 8, anchor_point)
         // output_w_.push_back(output_dims[2]);
-        output_class_num_.push_back(output_dims[1]);   
+        class_num_.push_back(output_dims[1]);   
     } 
 }
 
-void SequenceInferencer::PreProcess(std::string& image_path){
+void SequenceInferencer::PreProcess(const std::string& image_path){
     //1. read
     //2. BGR2GRAY
     //3. RescaleToHeight
     //4. normalize
-    image_path_ = return_image_path(image_path);
-	image_ = cv::imread(image_path_);
-	if (image_.empty()) {
-		std::cerr << "Failed to read the image!" << std::endl;
-		return;
-	}
+    image_path_ = image_path;
+    std::ifstream test_open(image_path_);
+    if(test_open.is_open()){
+        image_ = cv::imread(image_path_);
+        test_open.close();
+        if (image_.empty()) {
+	    	std::cerr << "Failed to read the image!" << std::endl;
+            return;
+        }
+    }else{
+        std::cerr << "Failed to read the image!" << std::endl;
+        return;
+    }
     cv::cvtColor(image_, image_, cv::COLOR_RGB2GRAY);  
     
     // RescaleToHeight
@@ -80,12 +102,12 @@ void SequenceInferencer::PreProcess(std::string& image_path){
     cv::resize(image_, image_, cv::Size(w_resized, h_resized), 0, 0, cv::INTER_LINEAR); 
     image_.convertTo(image_, CV_32F);  // 在进行归一化之前，这个操作是必须的
     image_ = (image_ - 127.0) / 127.0;
-    input_h_[0] = h_resized;
-    input_w_[0] = w_resized;
+    net_h_[0] = h_resized;
+    net_w_[0] = w_resized;
 }
 
 
-void SequenceInferencer::PreProcess(cv::Mat& image){
+void SequenceInferencer::PreProcess(cv::Mat image){
     //1. read
     //2. BGR2GRAY
     //3. RescaleToHeight
@@ -111,8 +133,8 @@ void SequenceInferencer::PreProcess(cv::Mat& image){
     image_.convertTo(image_, CV_32F);  // 在进行归一化之前，这个操作是必须的
     image_ = (image_ - 127.0) / 127.0;
     
-    input_h_[0] = h_resized;
-    input_w_[0] = w_resized;
+    net_h_[0] = h_resized;
+    net_w_[0] = w_resized;
 }
 
 void SequenceInferencer::SaveOrtValueAsImage(Ort::Value& value, const std::string& filename) {
@@ -157,16 +179,15 @@ void SequenceInferencer::Inference(){
 	const std::array<const char*, 1> outNames = { output_node_names_[0].c_str() };
    
 	// cv::Mat blob;
-	// cv::dnn::blobFromImage(image_, blob, 1 / 255.0, cv::Size(input_w_[0], input_h_[0]), cv::Scalar(0, 0, 0), true, false);  // swapRB = true, crop = false,
+	// cv::dnn::blobFromImage(image_, blob, 1 / 255.0, cv::Size(net_w_[0], net_h_[0]), cv::Scalar(0, 0, 0), true, false);  // swapRB = true, crop = false,
     
-	size_t tpixels = input_h_[0] * input_w_[0] * 3 * 1;
-	std::array<int64_t, 4> input_shape_info{ 1, 1, input_h_[0], input_w_[0]};
+	size_t tpixels = net_h_[0] * net_w_[0] * 3 * 1;
+	std::array<int64_t, 4> input_shape_info{ 1, 1, net_h_[0], net_w_[0]};
 
     
 	auto allocator_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	Ort::Value input_tensor = Ort::Value::CreateTensor<float>(allocator_info, image_.ptr<float>(), tpixels, input_shape_info.data(), input_shape_info.size());
     assert(input_tensor.IsTensor());
-    
 	try {
 		#ifdef CONFORMANCE_TEST
 			SaveOrtValueToTextFile(input_tensor, "onnx_input.txt");
@@ -186,7 +207,7 @@ void SequenceInferencer::Inference(){
 void SequenceInferencer::PostProcess(){
 	// output data
 	float* pdata = ort_outputs_[0].GetTensorMutableData<float>();  // pdata的尺寸还需要从长计议 1, (w_input_[0] + 4)/4, 37;
-    int L = (input_w_[0] + 4)/4;
+    int L = (net_w_[0] + 4)/4;
     int C = charset_len_with_blank_;
 
     std::vector<int> predictions;
@@ -224,44 +245,6 @@ void SequenceInferencer::PostProcess(){
 	#endif
 
 }
-
-cv::Mat SequenceInferencer::pad_and_resize(const cv::Mat img){
-	/*如果原始图片的宽和高有任意1个超过网络的输入宽、高，则先按照长宽比进行padding，再resize；
-      否则，直接padding到网络的输入宽、高*/
-    
-    int w_img = img.cols;
-    int h_img = img.rows;
-    
-    
-    // 计算缩放比例
-    scale_ = std::min(static_cast<double>(input_h_[0]) / h_img, static_cast<double>(input_w_[0]) / w_img);
-    scale_ = std::min(static_cast<double>(scale_), 1.0);  //如果原始图片的宽和高都不超过网络的宽和高，则将scale设置为1，表示事实上不进行resize.
-    // 计算新的宽度和高度
-    int w_resized = static_cast<int>(std::round(scale_ * w_img));
-    int h_resized = static_cast<int>(std::round(scale_ * h_img));
-    // 缩放图像
-    cv::Mat img_resized;
-    cv::resize(img, img_resized, cv::Size(w_resized, h_resized), 0, 0, cv::INTER_LINEAR);
-
-    // 计算边框宽度和高度
-    int dw = input_w_[0] - w_resized;
-    int dh = input_h_[0] - h_resized;
-
-    // 分配边框宽度（上下左右）
-    top_ = dh / 2;
-    bottom_ = dh - top_;
-    left_ = dw / 2;
-    right_ = dw - left_;
-
-    // 添加边框
-    cv::Mat img_bordered;
-    cv::copyMakeBorder(img_resized, img_bordered, top_, bottom_, left_, right_,
-                       cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-
-    // 返回处理后的图像
-    return img_bordered;
-}
-
 std::pair<std::vector<int>, std::vector<char>> SequenceInferencer::GetRes(){
     return std::make_pair(decoded_indices_, decoded_chars_);
 }
