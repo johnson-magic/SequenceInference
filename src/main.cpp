@@ -1,17 +1,9 @@
-#include <iostream>
-#include <chrono>
-#include <fstream>
-#include <vector>
-#include <math.h>
 #include <thread>
 #include <chrono>
 #include <windows.h>
-// #include <sys/time.h> only linux platform
 
-#include "sequence_inferencer.h"
-
-// #include "config.h"
 #include "utils.h"
+#include "sequence_inferencer.h"
 
 using namespace std;
 
@@ -43,18 +35,14 @@ int main(int argc, char** argv){
 	std::string image_path = argv[3];
 	std::string result_path = argv[4];
     
-	/*step1: 构造inference对象*/
-	SequenceInferencer sequence(model_path, charset_path);  // 理论上，image_path放到构造函数中，总是怪怪的
+	SequenceInferencer sequence(model_path, charset_path);
     
     sequence.GetInputInfo();
 	sequence.GetOutputInfo();
 
-	
-	std::filesystem::file_time_type lastCheckedTime = std::filesystem::file_time_type();
-	
+	cv::Scalar pre_pixel_sum=cv::Scalar(0, 0, 0, 0);
     while (keepRunning) {
-        if (hasImageUpdated(image_path, lastCheckedTime)) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if (hasImageUpdated(image_path, pre_pixel_sum)) {
 
 			#ifdef ENCRYPT
 				if(left == 0){
