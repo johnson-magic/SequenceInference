@@ -26,7 +26,7 @@ set(SEQUENCE_DEMO_SOURCES
 )
 
 add_subdirectory("./sequence_inference")
-add_library(${PROJECT_NAME} ${SEQUENCE_DEMO_SOURCES})
+add_executable(${PROJECT_NAME} ${SEQUENCE_DEMO_SOURCES})
 include_directories("./demo/utils/include")
 include_directories("./sequence_inference/include")
 find_package(OpenCV REQUIRED)
