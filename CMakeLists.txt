@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
 # 设置项目名称
-project(SequenceInference)
+project(sequence_demo)
+
 set(CMAKE_BUILD_TYPE Release)
 
 option(SPEED_TEST "SPEED TEST" OFF)
@@ -17,34 +18,29 @@ if(ENCRYPT)
     add_definitions(-DENCRYPT)
 endif()
 
-# 查找 OpenCV 包
-
-find_package(OpenCV REQUIRED)
 
 # 设置可执行文件名
-set(SOURCES
-    src/main.cpp
-    src/sequence_inferencer.cpp
-    src/utils.cpp
+set(SEQUENCE_DEMO_SOURCES
+    demo/main.cpp
+    demo/utils/src/utils.cpp
 )
-set(SOURCES_LIBRARY
-    src/sequence_inferencer.cpp
-    src/utils.cpp
-)
-add_library(${PROJECT_NAME}_lib ${SOURCES_LIBRARY})
-add_executable(${PROJECT_NAME} ${SOURCES}) # main.cpp 为你的源文件名称
-include_directories("./include")
 
-# 链接 OpenCV 库和 ONNX Runtime 库
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} "D:/software_path/onnxruntime-win-x64-1.15.1/onnxruntime-win-x64-1.15.1/lib/onnxruntime.lib" "D:/software_path/onnxruntime-win-x64-1.15.1/onnxruntime-win-x64-1.15.1/lib/onnxruntime_providers_shared.lib")
-# 包含OpenCV头文件和ONNX Runtime头文件
+add_subdirectory("./sequence_inference")
+add_executable(${PROJECT_NAME} ${SEQUENCE_DEMO_SOURCES})
+include_directories("./demo/utils/include")
+include_directories("./sequence_inference/include")
+find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories("D:/software_path/onnxruntime-win-x64-1.15.1/onnxruntime-win-x64-1.15.1/include")
+
+# 链接 OpenCV 库和 ONNX Runtime 库
+target_link_libraries(${PROJECT_NAME}
+                      ${OpenCV_LIBS}
+                      sequence_inference
+                      "D:/software_path/onnxruntime-win-x64-1.15.1/onnxruntime-win-x64-1.15.1/lib/onnxruntime.lib"
+                      "D:/software_path/onnxruntime-win-x64-1.15.1/onnxruntime-win-x64-1.15.1/lib/onnxruntime_providers_shared.lib")
 
 # 设置 C++ 标准
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED YES)
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED YES)  # 这个是必须的，否则会报错
