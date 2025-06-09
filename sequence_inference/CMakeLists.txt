@@ -6,8 +6,10 @@ set(SEQUENCE_INFERENCE_LIBRARY
 add_library(sequence_inference ${SEQUENCE_INFERENCE_LIBRARY})
 
 include_directories("./include")
+find_package(OpenCV REQUIRED)
+find_package(onnxruntime REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories("D:/software_path/onnxruntime-win-x64-1.15.1/onnxruntime-win-x64-1.15.1/include")
+include_directories(${onnxruntime_INCLUDE_DIR})
 
 set_target_properties(sequence_inference PROPERTIES
     CXX_STANDARD 17
