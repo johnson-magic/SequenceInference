@@ -1,6 +1,6 @@
 
 #include <cmath>
-#include "sequence_inferencer.h"
+#include "sequencer_inference.h"
 
 void SequenceInferencer::Init(std::string &model_path, std::string &charset_path)
 {
